@@ -89,7 +89,7 @@ pip install -r requirements.txt
 
 ```bash
 cd ../frontend
-cp .env.example .env.local
+cp env_file .env.local
 npm install
 ```
 
