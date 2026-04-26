@@ -73,7 +73,11 @@ export function SignClipPlayer({ segment }: { segment: TranscriptSegment | null 
     );
   }
 
-  const current = clips[index];
+  // Guard against stale `index` during the render between a new segment
+  // arriving and the useEffect-driven reset (e.g. new segment has fewer clips).
+  const safeIndex = index >= clips.length ? 0 : index;
+  const current = clips[safeIndex];
+  if (!current) return null;
   const isMp4 = current.video_type === "mp4" && !errored.has(current.id);
   const isYoutube = current.video_type === "youtube" && !errored.has(current.id);
   const youtubeEmbed = current.youtube_id
