@@ -109,6 +109,9 @@ export const api = {
   /**
    * Upload a WAV file: backend transcribes via Whisper, identifies speaker
    * via pyannote, and runs the full agent pipeline.
+   *
+   * Has a 60s timeout — Whisper cold-start on HF Inference can take 20-30s,
+   * but anything over 60s means something is stuck.
    */
   transcribeAudio: async (
     meetingId: string,
@@ -116,13 +119,35 @@ export const api = {
     target_language = "en",
     text_hint?: string,
   ): Promise<TranscribeResponse & { audio_bytes_size: number }> => {
+    if (audioBlob.size === 0) throw new Error("Empty audio — please record at least 1.5 seconds");
+    if (audioBlob.size > 15 * 1024 * 1024) {
+      throw new Error(`Audio too large (${(audioBlob.size / 1024 / 1024).toFixed(1)} MB) — keep recordings under ~5 minutes`);
+    }
+
     const fd = new FormData();
     fd.append("audio", audioBlob, "speech.wav");
     const params = new URLSearchParams({ meeting_id: meetingId, target_language });
     if (text_hint) params.set("text_hint", text_hint);
-    const res = await fetch(`${BASE}/transcribe-audio?${params}`, { method: "POST", body: fd });
-    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
-    return await res.json();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+    try {
+      const res = await fetch(`${BASE}/transcribe-audio?${params}`, {
+        method: "POST",
+        body: fd,
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+      return await res.json();
+    } catch (e: any) {
+      if (e?.name === "AbortError") {
+        throw new Error("Whisper timed out after 60s — try a shorter recording or use the text input");
+      }
+      throw e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   },
 
   endMeeting: (meetingId: string) =>

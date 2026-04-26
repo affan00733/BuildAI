@@ -10,7 +10,7 @@ import { CaptionStream } from "@/components/CaptionStream";
 import { LLMStatsFooter } from "@/components/LLMStatsFooter";
 import { LanguagePicker } from "@/components/LanguagePicker";
 import { MediaRecorderMic } from "@/components/MediaRecorderMic";
-import { SignClipPlayer } from "@/components/SignClipPlayer";
+import { SignAvatar } from "@/components/SignAvatar";
 import { SpeakerCard } from "@/components/SpeakerCard";
 import { api } from "@/lib/api-client";
 import type {
@@ -314,7 +314,7 @@ export default function MeetingPage() {
             {/* Captions + signs */}
             <div className="space-y-6 lg:col-span-6">
               <CaptionStream segments={transcript} />
-              <SignClipPlayer segment={latestSegment} />
+              <SignAvatar segment={latestSegment} />
             </div>
 
             {/* Agent panel */}

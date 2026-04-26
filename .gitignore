@@ -1,9 +1,14 @@
-# Secrets
+# Secrets — NEVER COMMIT
 .env
 .env.local
 .env.*.local
 *.key
 *.pem
+
+# Large raw WLASL dataset (rebuild via `python scripts/build_wlasl_library.py`)
+backend/data/WLASL_v0.3.json
+# But DO commit the processed library (817 KB) so judges can run without rebuilding:
+!backend/data/wlasl_library.json
 
 # Python
 __pycache__/
